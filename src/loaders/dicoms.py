@@ -7,9 +7,9 @@ import comtypes.client as cct
 import ctypes
 import numpy as np
 import platform
+import warnings
 
 from pathlib import WindowsPath
-from warnings import warn
 
 from lookup import LUT
 from utils import VoxelInfo
@@ -18,6 +18,8 @@ from utils import VoxelInfo
 
 Image3DAPIWin32 = None
 Image3DAPIx64 = WindowsPath("C:/Users/malou/Documents/dev/Image3dAPI/x64/Image3dAPI.tlb")
+
+warnings.simplefilter("always", RuntimeWarning)
 
 
 
@@ -68,7 +70,7 @@ def dcm2info(fname, time_frame, voxres):
     try:
         lut = np.array(src.GetColorMap(), dtype=np.uint).astype(np.uint8)
     except:
-        warn("No colormap found in DICOM file, using a generic one. See `utils.py`", RuntimeWarning)
+        warnings.warn("No colormap found in DICOM file, using a generic one. See `utils.py`", RuntimeWarning)
         lut = LUT
     # Get corresponding input frame
     max_res = np.ctypeslib.as_ctypes(res.astype(np.ushort))

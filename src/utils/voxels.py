@@ -1,6 +1,12 @@
 import numpy as np
+import warnings
 
 from utils.misc import get_affine
+
+
+
+warnings.simplefilter("default", UserWarning)
+
 
 
 

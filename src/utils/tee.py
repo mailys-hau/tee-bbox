@@ -12,6 +12,11 @@ from utils.voxels import VoxelInfo
 
 
 
+warnings.simplefilter("default", UserWarning)
+
+
+
+
 class _TEE:
     """ Input TEE as a mesh """
     def __init__(self, tee, tee_type, **voxinfo):
