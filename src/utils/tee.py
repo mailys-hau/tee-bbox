@@ -38,6 +38,7 @@ class _TEE:
     def mesh(self):
         if self._mesh is None:
             verts, faces, vnormals, _ = marching_cubes(self.voxel, spacing=self.spacing)
+            verts = verts @ self.voxinfo.directions + self.voxinfo.origin
             self._mesh = tm.Trimesh(vertices=verts, faces=faces,
                                     vertex_normals=vnormals)
         return self._mesh

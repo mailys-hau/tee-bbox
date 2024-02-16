@@ -56,17 +56,17 @@ class VoxelInfo:
     def to_mm(self):
         if self.unit == 'm':
             self.unit = "mm"
-            self.directions /= 1000
-            self.origin /= 1000
-            self.spacing /= 1000
+            self.directions *= 1000
+            self.origin *= 1000
+            self.spacing *= 1000
             self._affine()
 
     def to_m(self):
         if self.unit == "mm":
             self.unit = 'm'
-            self.directions *= 1000
-            self.origin *= 1000
-            self.spacing *= 1000
+            self.directions /= 1000
+            self.origin /= 1000
+            self.spacing /= 1000
             self._affine()
 
     @property
