@@ -1,6 +1,6 @@
 import click as cli
 
-from pathlib import Path
+from pathlib import Path, WindowsPath
 
 from boxes import *
 from loaders import *
@@ -40,22 +40,29 @@ def make_bbox(pin, ptg, vendor, bshape, thick, voxres, merge, pout, save_format)
 
     PDATA    DIR    Where the data are stored.
     """
-    if vendor == "ge" and OS_NAME == "Windows":
-        raise ValueError("Can only run `--ge` option on Windows OS.")
-    loader = load_ge if vendor == "ge" else load_philips
+    if vendor == "ge":
+        if not OS_NAME == "Windows":
+            raise ValueError("Can only run `--ge` option on Windows OS.")
+        pin, ptg, pout = WindowsPath(pin), WindowsPath(ptg), WindowsPath(pout)
+        loader, suffix = load_ge, ".dcm"
+        thick, voxres, midaxis = thick / 1e3, voxres / 1e3, 1
+    else:
+        loader, suffix = load_philips, ".nrrd"
+        midaxis = 2
     shaper = normal_extrude if bshape == "valve" else rectangle_extrude
     saver = SAVERS[save_format.lower()]
     pout.mkdir(parents=True, exist_ok=True)
     voxres = [voxres, voxres, voxres]
     for fname in pin.iterdir():
-        #FIXME: Load dicom
+        if fname.suffix != suffix:
+            continue
         with open(fname, "br") as fd:
             # Load (necessary data to create) surface
             # If merge, return mitral valve surface as a whole
             surface, vinp = loader(fname, ptg, voxres, merge)
         # Create bbox
         if not merge:
-            bbox = [ shaper(s.mesh, s.voxinfo, thick) for s in surface ]
+            bbox = [ shaper(s.mesh, s.voxinfo, thick, midaxis) for s in surface ]
         else:
             bbox = shaper(surface.mesh, surface.voxinfo, thick)
         # Save all info
