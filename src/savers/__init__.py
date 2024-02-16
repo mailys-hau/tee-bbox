@@ -60,7 +60,8 @@ def save_as_nrrd(bbox, vinput, fname, bshape="rectangle"):
               "encoding": "gzip",
               "space origin": vinfo.origin}
     fname = fname.with_stem(f"{fname.stem}-{bshape}").with_suffix(".nrrd")
-    nrrd.write(fname, bbox, header)
+    # Use same type as when loading Philips
+    nrrd.write(str(fname), bbox.astype(np.int16), header)
 
 
 SAVERS = {"hdf": save_as_hdf, "nii": save_as_nii, "nrrd": save_as_nrrd}
