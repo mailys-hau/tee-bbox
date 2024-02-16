@@ -29,11 +29,13 @@ def rectangle_extrude(mesh, voxinfo, thickness=3, midaxis=1):
     bounds = np.stack([mbox.vertices[0], mbox.vertices[-1]])
     bounds[:,midaxis] = bounds[:,midaxis].mean() # Middle along Y-axis or Z-axis
     middle = tm.creation.box(bounds=bounds) # Middle mesh
-    increments = np.stack([np.arange(-thickness / 2, thickness / 2, vr) for vr in voxinfo.spacing])
+    increments = np.stack([np.arange(-thickness / 2, thickness / 2 + vr, vr)
+                            for vr in voxinfo.spacing])
     return _extrude(middle, voxinfo, increments)
 
-def normal_extrude(mesh, voxinfo, thickness=3):
+def normal_extrude(mesh, voxinfo, thickness=3, midaxis=-1):
     """ Taken from `echovox` """
     # Voxelize every increment around surface with proper spacing to get a full volume
-    increments = np.stack([np.arange(-thickness / 2, thickness / 2, vr) for vr in voxinfo.spacing])
+    increments = np.stack([np.arange(-thickness / 2, thickness / 2 + vr, vr)
+                            for vr in voxinfo.spacing])
     return _extrude(mesh, voxinfo, increments)
