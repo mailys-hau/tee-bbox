@@ -11,8 +11,8 @@ import warnings
 
 from pathlib import WindowsPath
 
-from lookup import LUT
-from utils import VoxelInfo
+from utils.lookup import LUT
+from utils import VoxelTEE
 
 
 
@@ -47,8 +47,7 @@ def frame2arr(frame):
     return np.copy(arr3d)
 
 
-def dcm2info(fname, time_frame, voxres):
-    #voxres /= 1000 # Because GE in in meter
+def dcm2vox(fname, time_frame, voxres):
     if "32" in platform.architecture()[0]:
         Image3dAPI = cct.GetModule(str(Image3DAPIWin32))
     else:
@@ -74,9 +73,9 @@ def dcm2info(fname, time_frame, voxres):
         lut = LUT
     # Get corresponding input frame
     max_res = np.ctypeslib.as_ctypes(res.astype(np.ushort))
-    frame = frame2arr(src.GetFrame(time_frame, bbox, max_res))
+    fidx = src.GetFrameTimes().index(time_frame)
+    frame = frame2arr(src.GetFrame(fidx, bbox, max_res))
     frame = lut[frame]
     out = VoxelTEE(frame, origin=origin, directions=directions, spacing=voxres,
-                   unit='m', shape=frame.shape, colormap=lut, time_frame=time_frame)
-    out.to_mm()
+                   unit='m', shape=frame.shape, colormap=lut, frame_time=time_frame)
     return out

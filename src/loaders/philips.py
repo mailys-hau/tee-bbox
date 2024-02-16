@@ -30,7 +30,8 @@ def load_philips(fname, dmask, voxres, merge=True):
     gtarr = label2onehot(gtimg, [0, 1])
     # GT affine may be different than input, so use `gtinfo`
     avox = VoxelTEE(mid_vox_grid(gtarr[0]), origin=gtinfo["space origin"],
-                    directions=gtinfo["space directions"], spacing=voxres,
+                    directions=gtinfo["space directions"],
+                    spacing=abs(gtinfo["space directions"].diagonal()),
                     shape=gtarr[0].shape, frame_time=fid)
     pvox = VoxelTEE(mid_vox_grid(gtarr[1]), origin=gtinfo["space origin"],
                     directions=gtinfo["space directions"],
@@ -38,6 +39,6 @@ def load_philips(fname, dmask, voxres, merge=True):
                     shape=gtarr[1].shape, frame_time=fid)
     avox.resample(voxres), pvox.resample(voxres)
     amesh, pmesh = avox.to_mesh(), pvox.to_mesh()
-    amesh.apply_affine(), pmesh.apply_affine()
+    #amesh.apply_affine(), pmesh.apply_affine()
     mesh = MeshTEE.concat([amesh, pmesh]) if merge else [amesh, pmesh]
     return mesh, vinp

@@ -4,8 +4,8 @@ Load input & mitral annulus *surface* from GE. #Put everything in an RAS coordin
 
 import trimesh as tm
 
-from dicoms import dcm2vox
-from loaders.ply import full_load_ply
+from loaders.dicoms import dcm2vox
+from loaders.plys import full_load_ply
 from utils import label2onehot, MeshTEE
 
 
@@ -19,13 +19,13 @@ def load_ge(fname, pply, voxres, merge=True):
     # Load necessary info from DICOM as VoxelTEE (=Input US)
     vinp = dcm2vox(fname, mf, voxres) # Already converted in mm
     # Load PLY meshes
-    with open(fname.joinpath(f"anterior-{mf}.ply"), "br") as fd:
+    with open(pply.joinpath(f"anterior-{mf}.ply"), "br") as fd:
         damesh = full_load_ply(fd, prefer_color="faces")
-    amesh = MeshTEE(tm.Trimesh(**damesh), vinp.voxinfo)
+    amesh = MeshTEE(tm.Trimesh(**damesh), voxinfo=vinp.voxinfo)
     with open(pply.joinpath(f"posterior-{mf}.ply"), "br") as fd:
         dpmesh = full_load_ply(fd, prefer_color="faces")
-    pmesh = MeshTEE(tm.Trimesh(**dpmesh), vinp.voxinfo)
-    #amesh, pmesh = amesh.apply_affine(), pmesh.apply_affine()
+    pmesh = MeshTEE(tm.Trimesh(**dpmesh), voxinfo=vinp.voxinfo)
+    #amesh.apply_affine(), pmesh.apply_affine()
     # Merge meshes if needed
     mesh = MeshTEE.concat([amesh, pmesh]) if merge else [amesh, pmesh]
     return mesh, vinp
