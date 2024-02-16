@@ -2,7 +2,7 @@ import click as cli
 import numpy as np
 import trimesh as tm
 
-from pathlib import Path
+from pathlib import Path, WindowsPath
 from skimage.measure import marching_cubes
 from trimesh.voxel.base import VoxelGrid
 
@@ -10,23 +10,40 @@ from boxes import *
 from loaders import *
 
 
+
+def bbox2mesh(bbox, vinfo, which):
+    if bbox.sum() == 0:
+        print(f"Generated bounding box of the {which} is empty, RiP.")
+        print("Stopping debug here.")
+        return
+    verts, faces, vnormals, _ = marching_cubes(bbox, spacing=vinfo.spacing)
+    verts = verts @ vinfo.directions + vinfo.origin
+    mesh = tm.Trimesh(vertices=verts, faces=faces, vertex_normals=vnormals)
+    return mesh
+
+
 @cli.command()
 @cli.option("--philips", "-P", "vendor", flag_value="philips", default=True)
 @cli.option("--ge", "-G", "vendor", flag_value="ge", default=False)
-def debug_me(vendor):
+@cli.option("--shape", "-s", "bshape", default="rectangle",
+            type=cli.Choice(["rectangle", "valve"], case_sensitive=False))
+def debug_me(vendor, bshape):
     # Get data sample
     root = Path("~/Documents/data/debug-nxp").expanduser()
+    vr = np.array([0.5, 0.5, 0.5])
     if vendor == "ge":
-        pin = root.joinpath("file.dcm")
-        pgt = pin.with_suffix('')
+        pin = WindowsPath(root.joinpath("file.dcm"))
+        pgt = pin.parent
         loader = load_ge
+        thickness, midaxis = 0.003, 1
+        vr /= 1e3
     else:
         pin = root.joinpath("images/file.nrrd")
         pgt = root.joinpath("masks_es")
         loader = load_philips
+        thickness, midaxis = 3, 2
 
-    vr = np.array([0.5, 0.5, 0.5])
-    meshes, vinp, voxels = loader(pin, pgt, vr, False)
+    meshes, vinp = loader(pin, pgt, vr, False)
     vinfo = meshes[0].voxinfo
     # Get all types of mesh
     amesh, pmesh = meshes[0].mesh, meshes[1].mesh
@@ -34,29 +51,30 @@ def debug_me(vendor):
     amesh.visual.face_colors = [203, 41, 214, 150]
     pmesh.visual.face_colors = [31, 204, 219, 150]
     mesh.visual.face_colors = [173, 127, 0, 150]
-    # Get all types of voxel grids, Trimesh type
-    avg = VoxelGrid(voxels[0].voxel, transform=meshes[0].affine)
-    pvg = VoxelGrid(voxels[1].voxel, transform=meshes[1].affine)
-    mv = voxels[0].voxel | voxels[1].voxel
-    vg = VoxelGrid(mv, transform=meshes[1].affine)
 
     # Get that bounding box
-    bbox = rectangle_extrude(mesh, vinfo, midaxis=2).voxel
-    if bbox.sum() == 0:
-        print("Generated bounding box is empty, RiP.")
-        print("Stopping debug here.")
+    shaper = rectangle_extrude if bshape == "rectangle" else normal_extrude
+    abbox = shaper(amesh, vinfo, thickness, midaxis).voxel
+    pbbox = shaper(pmesh, vinfo, thickness, midaxis).voxel
+    mbbox = shaper(mesh, vinfo, thickness, midaxis).voxel
+    abmesh = bbox2mesh(abbox, vinfo, "anterior leaflet")
+    pbmesh = bbox2mesh(pbbox, vinfo, "posterior leaflet")
+    mbmesh = bbox2mesh(mbbox, vinfo, "mitral valve")
+    if abmesh is None or pbmesh is None or mbmesh is None:
         return
-    verts, faces, vnormals, _ = marching_cubes(bbox, spacing=vinfo.spacing)
-    bmesh = tm.Trimesh(vertices=verts, faces=faces, vertex_normals=vnormals)
-    bmesh.visual.face_colors = [173, 127, 0, 150]
+    abmesh.visual.face_colors = [203, 41, 214, 150]
+    pbmesh.visual.face_colors = [31, 204, 219, 150]
+    mbmesh.visual.face_colors = [173, 127, 0, 150]
 
     #  Plot thingies
-    sc = tm.Scene()
-    sc.add_geometry(amesh), sc.add_geometry(pmesh)
-    #sc.add_geometry(bmesh)
-    sc.show(flags={"axis": True, "wireframe": True})
-    #sc.add_geometry(mesh)
-    #sc.show(flags={"axis": True, "wireframe": True})
+    sc1 = tm.Scene()
+    sc1.add_geometry(amesh), sc1.add_geometry(pmesh)
+    sc1.add_geometry(abmesh), sc1.add_geometry(pbmesh)
+    sc1.show(flags={"axis": True, "wireframe": True})
+    sc2 = tm.Scene()
+    sc2.add_geometry(mesh)
+    sc2.add_geometry(mbmesh)
+    sc2.show(flags={"axis": True, "wireframe": True})
 
 
 
