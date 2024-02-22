@@ -63,6 +63,10 @@ class VoxelTEE(_TEE):
             voxinfo["shape"] = tee.shape
         super(VoxelTEE, self).__init__(tee, "voxel", **voxinfo)
 
+    @property
+    def shape(self):
+        return self._voxel.shape
+
     def resample(self, new_spacing):
         if isinstance(new_spacing, list):
             new = np.array(new_spacing)
@@ -72,11 +76,12 @@ class VoxelTEE(_TEE):
             if not isinstance(new_spacing, np.ndarray):
                 raise ValueError(f"Spacing must be a `float`, `list`, or `numpy.ndarray`, got {type(new_spacing)}.")
             new = new_spacing
-        zoom = self.voxinfo.spacing / new
+        new_shape = np.round(np.array(self.shape) * self.spacing / new)
+        zoom = new_shape / self.shape
         self._voxel = scpn.zoom(self.voxel, zoom)
         self.voxinfo.spacing = new
-        self.shape = self.voxel.shape
         self.voxinfo._affine()
+        self.voxinfo.shape = self.voxel.shape
 
     def to_mesh(self):
         return MeshTEE(self.mesh, voxinfo=self.voxinfo)

@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.ndimage as scpn
 import warnings
 
 from utils.misc import get_affine
@@ -10,12 +11,21 @@ warnings.simplefilter("default", UserWarning)
 
 
 
+def resample(vgrid, ores, nres):
+    oshape = np.array(vgrid.shape)
+    nshape = np.round(oshape * ores / nres)
+    zoom = nshape / oshape
+    vgrid = scpn.zoom(vgrid, zoom)
+    return vgrid
+
+
 def mid_vox_grid(vgrid, deep_axis=2):
     """ Find the middle surface of a voxel grid along `deep_axis` """
     out = np.zeros_like(vgrid)
     x, y, z = list(vgrid.shape)
     if deep_axis == 1: # GE uses Y-axis as deep_axis
         pass #TODO
+    max_dist = 0
     for i in range(x):
         for j in range(y):
             if vgrid[i, j].sum() == 0:
@@ -27,10 +37,12 @@ def mid_vox_grid(vgrid, deep_axis=2):
                         first = k # Top outer voxel
                     last = k
             if 0 < first and 0 < last: # Security
+                if last - first > max_dist:
+                    max_dist = last - first
                 mid = int((last - first) / 2)
                 out[i, j, mid] = True
     # We lost the connectivity, but since we're making bounding boxes it's fine
-    return out
+    return out, max_dist
 
 
 class VoxelInfo:
