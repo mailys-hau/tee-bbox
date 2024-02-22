@@ -9,14 +9,14 @@ from utils.tee import VoxelTEE
 
 
 
-def _extrude(mesh, voxinfo, increments):
+def _extrude(mesh, voxinfo, increments, midaxis=1):
     # Voxelize every increment around surface with proper spacing to get a full volume
     # Accumulate pointsin subdivided meshes, it'll be your positive voxels
     allidx = []
     evec = mesh.vertex_normals # Extrude vector
     for i in range(increments.shape[-1]):
         inc = increments[:,i]
-        allidx.append(get_voxidx(mesh, inc * evec, voxinfo))
+        allidx.append(get_voxidx(mesh, inc * evec, voxinfo, midaxis))
     allidx = np.unique(np.concatenate(allidx, axis=0), axis=0)
     voxgrid = np.zeros(voxinfo.shape, dtype=bool)
     # Set voxels inside mitral annulus to be True
@@ -31,11 +31,11 @@ def rectangle_extrude(mesh, voxinfo, thickness=3, midaxis=1):
     middle = tm.creation.box(bounds=bounds) # Middle mesh
     increments = np.stack([np.arange(-thickness / 2, thickness / 2 + vr, vr)
                             for vr in voxinfo.spacing])
-    return _extrude(middle, voxinfo, increments)
+    return _extrude(middle, voxinfo, increments, midaxis)
 
-def normal_extrude(mesh, voxinfo, thickness=3, midaxis=-1):
+def normal_extrude(mesh, voxinfo, thickness=3, midaxis=1):
     """ Taken from `echovox` """
     # Voxelize every increment around surface with proper spacing to get a full volume
     increments = np.stack([np.arange(-thickness / 2, thickness / 2 + vr, vr)
                             for vr in voxinfo.spacing])
-    return _extrude(mesh, voxinfo, increments)
+    return _extrude(mesh, voxinfo, increments, midaxis)
