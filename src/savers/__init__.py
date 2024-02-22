@@ -40,7 +40,7 @@ def save_as_nii(bbox, vinput, fname, bshape="rectangle"):
     else:
         bbox = bbox.voxel
     gtimg = nib.Nifti1Image(bbox, vinfo.affine, header=header)
-    fname = fname.with_stem(f"{fname.stem}-{bshape}").with_suffix(".nii")
+    fname = fname.with_stem(f"{fname.stem}-{bshape}").with_suffix(".nii.gz")
     nib.save(gtimg, fname)
 
 def save_as_nrrd(bbox, vinput, fname, bshape="rectangle"):
