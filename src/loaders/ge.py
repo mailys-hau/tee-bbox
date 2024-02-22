@@ -12,10 +12,16 @@ from utils import label2onehot, MeshTEE
 
 def load_ge(fname, pply, voxres, merge=True):
     pply = pply.joinpath(fname.stem)
+    if not pply.exists():
+        print(f"No surface found for {fname.name}, skipping it.")
+        return None, None
     # Select middle frame time *from meshes* (aka mid-systole)
     times = [ float(fn.stem.split('-')[-1]) for fn in pply.glob("anterior*")]
     times.sort()
-    mf = times[int(len(times) / 2) + 1]
+    try:
+        mf = times[int(len(times) / 2) + 1]
+    except IndexError: # If there's not enough frames we're gonna end up heretimes
+        mf = times[-1]
     # Load necessary info from DICOM as VoxelTEE (=Input US)
     vinp = dcm2vox(fname, mf, voxres) # Already converted in mm
     # Load PLY meshes

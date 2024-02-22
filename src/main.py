@@ -60,6 +60,8 @@ def make_bbox(pin, ptg, vendor, bshape, thick, voxres, merge, pout, save_format)
             # Load (necessary data to create) surface
             # If merge, return mitral valve surface as a whole
             surface, vinp = loader(fname, ptg, voxres, merge)
+            if surface is None:
+                continue
         # Create bbox
         if not merge:
             bbox = [ shaper(s.mesh, s.voxinfo, thick, midaxis) for s in surface ]
