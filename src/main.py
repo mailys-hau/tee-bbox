@@ -66,7 +66,7 @@ def make_bbox(pin, ptg, vendor, bshape, thick, voxres, merge, pout, save_format)
         if not merge:
             bbox = [ shaper(s.mesh, s.voxinfo, thick, midaxis) for s in surface ]
         else:
-            bbox = shaper(surface.mesh, surface.voxinfo, thick)
+            bbox = shaper(surface.mesh, surface.voxinfo, thick, midaxis)
         # Save all info
         saver(bbox, vinp, pout.joinpath(fname.stem), bshape)
 
