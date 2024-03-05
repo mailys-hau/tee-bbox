@@ -21,6 +21,9 @@ def load_ge(fname, pply, voxres, merge=True):
     try:
         mf = times[int(len(times) / 2) + 1]
     except IndexError: # If there's not enough frames we're gonna end up heretimes
+        if times == []:
+            print(f"No frames found for {fname.name}, skipping it.")
+            return None, None
         mf = times[-1]
     # Load necessary info from DICOM as VoxelTEE (=Input US)
     vinp = dcm2vox(fname, mf, voxres) # Already converted in mm
